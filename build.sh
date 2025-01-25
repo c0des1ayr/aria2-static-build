@@ -366,9 +366,19 @@ prepare_sqlite() {
     ln -sf mksourceid.exe mksourceid
     SQLITE_EXT_CONF="config_TARGET_EXEEXT=.exe"
   fi
+  patch_sqlite
   ./configure --build="${BUILD_ARCH}" --host="${CROSS_HOST}" --prefix="${CROSS_PREFIX}" --enable-static --disable-shared ${SQLITE_EXT_CONF}
   make -j$(nproc)
   make install
+  # Use the cross-strip tool if host arch is not x86_64
+  case "${CROSS_HOST}" in
+  	x86_64-*linux*)
+  		strip "${CROSS_PREFIX}/bin/sqlite3"
+  		;;
+  	*)
+  		"${CROSS_HOST}-strip" "${CROSS_PREFIX}/bin/sqlite3"
+  		;;
+  esac
   sqlite_ver="$(grep Version: "${CROSS_PREFIX}/lib/pkgconfig/"sqlite*.pc)"
   echo "- sqlite: ${sqlite_ver}, source: ${sqlite_latest_url:-cached sqlite}" >>"${BUILD_INFO}"
 }
@@ -445,7 +455,9 @@ build_aria2() {
   fi
   mkdir -p "/usr/src/aria2-${aria2_tag}"
   tar -zxf "${DOWNLOADS_DIR}/aria2-${aria2_tag}.tar.gz" --strip-components=1 -C "/usr/src/aria2-${aria2_tag}"
-  cd "/usr/src/aria2-${aria2_tag}"
+  cd "/usr/src/aria2-${aria2_tag}/src"
+  patch_aria2
+  cd ..
   if [ ! -f ./configure ]; then
     autoreconf -i
   fi
@@ -469,6 +481,7 @@ get_build_info() {
 
   echo "aria2 version info:" >>"${BUILD_INFO}"
   echo '```txt' >>"${BUILD_INFO}"
+  echo "- Max server connections: patched to new 65536 limit." >>"${BUILD_INFO}"
   echo "${ARIA2_VER_INFO}" >>"${BUILD_INFO}"
   echo '```' >>"${BUILD_INFO}"
 }
@@ -480,6 +493,45 @@ test_build() {
   "${RUNNER_CHECKER}" "${CROSS_PREFIX}/bin/aria2c"* -t 10 --console-log-level=debug --http-accept-gzip=true https://github.com/ -d /tmp -o test
   echo "================================================"
 }
+
+# |==============================|
+# |   All source patches below   |
+# |==============================|
+
+patch_sqlite() {
+  patch -p0 << 'EOF'
+  --- main_main.mk  2025-01-14 05:05:00.000000000 -0600
+  +++ main.mk 2025-01-24 18:10:11.399086093 -0600
+  @@ -2017,7 +2017,7 @@
+      $(LDFLAGS.libsqlite3) $(LDFLAGS.readline)
+ 
+   install-shell-0: sqlite3$(T.exe) $(install-dir.bin)
+  -	$(INSTALL) -s sqlite3$(T.exe) "$(install-dir.bin)"
+  +	$(INSTALL) sqlite3$(T.exe) "$(install-dir.bin)"
+   install-shell-1:
+   install: install-shell-$(HAVE_WASI_SDK)
+EOF
+}
+
+patch_aria2() {
+  patch -p0 << 'EOF'
+  --- OptionHandlerFactory_main.cc  2025-01-21 15:42:25.148756192 -0600
+  +++ OptionHandlerFactory.cc 2025-01-21 15:30:46.474893523 -0600
+  @@ -438,7 +438,7 @@
+     {
+       OptionHandler* op(new NumberOptionHandler(PREF_MAX_CONNECTION_PER_SERVER,
+                                                 TEXT_MAX_CONNECTION_PER_SERVER,
+  -                                              "1", 1, 16, 'x'));
+  +                                              "1", 1, 140737488355327, 'x'));
+       op->addTag(TAG_BASIC);
+       op->addTag(TAG_FTP);
+       op->addTag(TAG_HTTP);
+EOF
+}
+
+# |==============================|
+# |    End of source patches     |
+# |==============================|
 
 prepare_cmake
 prepare_ninja
@@ -494,7 +546,7 @@ build_aria2
 
 get_build_info
 # mips test will hang, I don't know why. So I just ignore test failures.
-# test_build
+#test_build
 
 # get release
 cp -fv "${CROSS_PREFIX}/bin/"aria2* "${SELF_DIR}"
