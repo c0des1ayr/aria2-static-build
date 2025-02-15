@@ -1,6 +1,7 @@
 name: "Build and Release"
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - "*"
@@ -88,9 +89,9 @@ jobs:
         run: |
           apt install -y zip
           if [ x"${USE_LIBRESSL}" = x"1" ]; then
-            ARCHIVE_NAME="aria2-${CROSS_HOST//-unknown/}_libressl_static.zip"
+            ARCHIVE_NAME="aria2-${CROSS_HOST//-unknown/}_libressl_static_maxxed.zip"
           else
-            ARCHIVE_NAME="aria2-${CROSS_HOST//-unknown/}_static.zip"
+            ARCHIVE_NAME="aria2-${CROSS_HOST//-unknown/}_static_maxxed.zip"
           fi
           echo "ARCHIVE_NAME=${ARCHIVE_NAME}" >> $GITHUB_ENV
           zip -j9v "/tmp/${ARCHIVE_NAME}" "${GITHUB_WORKSPACE}"/aria2c*

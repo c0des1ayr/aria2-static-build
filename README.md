@@ -1,18 +1,16 @@
 # aria2-static-build
 
-![Build and Release](https://github.com/abcfy2/aria2-static-build/actions/workflows/build_and_release.yml/badge.svg)
+![Build and Release](../../actions/workflows/build_and_release.yml/badge.svg)
 
 aria2 static build using musl and support many platforms.
 
 ## Download
 
-You can download from [Continuous Build](https://github.com/abcfy2/aria2-static-build/releases/tag/continuous) (Weekly build from aria2 master branch with latest dependencies).
-
-Or download from [latest release](https://github.com/abcfy2/aria2-static-build/releases/latest) build (Build from aria2 latest release version).
+You can download from the [Continuous Build](../../releases/tag/continuous) (Weekly build from aria2 master branch with latest dependencies).
 
 ## Android users NOTE
 
-If you were executed in Android environment (maybe x86_64, arm, or aarch64), please follow the official aria2 Android README: https://github.com/aria2/aria2/blob/master/README.android
+If you executed `aria2c` in Android environment (maybe x86_64, arm, or aarch64), please follow the official aria2 [Android README](https://github.com/aria2/aria2/blob/master/README.android).
 
 Here is a sample:
 
@@ -26,11 +24,11 @@ Please note `getprop net.dns1` does not work since Android 8, so you have to set
 
 SSL certificates location may vary from different distributions. E.g: Ubuntu uses `/etc/ssl/certs/ca-certificates.crt`, but CentOS uses `/etc/pki/tls/certs/ca-bundle.crt`.
 
-It's impossible to detect certificates location in all distributions. See issue: [openssl/openssl#7481](https://github.com/openssl/openssl/issues/7481). But luckily most distributions may contains a symbol link `/etc/ssl/cert.pem` which point to the actual file path.
+It's impossible to detect certificates location in all distributions. See issue: [openssl/openssl#7481](https://github.co/openssl/openssl/issues/7481). But luckily most distributions may contains a symbolic link `/etc/ssl/cert.pem` which points to the actual file path.
 
-So I set compile options `--openssldir=/etc/ssl/` for openssl/libressl. Which works for most distributions.
+So [abcfy2](https://github.com/abcfy2) set the compile option `--openssldir=/etc/ssl/` for openssl/libressl, which works for most distributions.
 
-If your environment contains file `/etc/ssl/openssl.cnf` or `/etc/ssl/cert.pem`, you were luckly and you can use my build out-of-box.
+If your environment contains file `/etc/ssl/openssl.cnf` or `/etc/ssl/cert.pem`, you were luckly and you can use this build out-of-the-box.
 
 But if your environment does not contain any of the files, you have to do one of the following settings to make https request could work.
 
@@ -39,9 +37,9 @@ But if your environment does not contain any of the files, you have to do one of
 
 > Reference for different distribution certificates locations: https://gitlab.com/probono/platformissues/blob/master/README.md#certificates
 
-## Fedora users NOTE
+## NOTE for Fedora users
 
-Fedora's openssl may contains some non-official patches and contains some configurations not support by this build openssl.
+Fedora's openssl may contains some non-official patches and contains some configurations not support by this build's openssl.
 
 For this scenario, you can force set an `OPENSSL_CONF` environment variable to point to an invalid path before run `aria2c`. E.g:
 
@@ -49,9 +47,9 @@ For this scenario, you can force set an `OPENSSL_CONF` environment variable to p
 OPENSSL_CONF=/tmp ./aria2c https://github.com/
 ```
 
-This will not be interfered with by Fedora's openssl configuration.
+Fedora's openssl configuration will not interfer with this.
 
-## Build locally yourself
+## Build it yourself locally
 
 Requirements:
 
@@ -61,9 +59,9 @@ Requirements:
 docker run --rm -v `pwd`:/build abcfy2/musl-cross-toolchain-ubuntu:${CROSS_HOST} /build/build.sh
 ```
 
-All avaliable `CROSS_HOST` can be found in [Tags](https://hub.docker.com/r/abcfy2/musl-cross-toolchain-ubuntu/tags) page.
+All avaliable `CROSS_HOST`s can be found in [Tags](https://hub.docker.com/r/abcfy2/musl-cross-toolchain-ubuntu/tags) page.
 
-**NOTE**: Currently I only tested these tags:
+**NOTE**: Currently [abcfy2](https://github.com/abcfy2) only tested these tags:
 
 - arm-unknown-linux-musleabi
 - aarch64-unknown-linux-musl

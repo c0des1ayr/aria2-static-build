@@ -447,7 +447,9 @@ build_aria2() {
   fi
   mkdir -p "/usr/src/aria2-${aria2_tag}"
   tar -zxf "${DOWNLOADS_DIR}/aria2-${aria2_tag}.tar.gz" --strip-components=1 -C "/usr/src/aria2-${aria2_tag}"
-  cd "/usr/src/aria2-${aria2_tag}"
+  cd "/usr/src/aria2-${aria2_tag}/src"
+  patch_aria2
+  cd ..
   if [ ! -f ./configure ]; then
     autoreconf -i
   fi
@@ -460,6 +462,7 @@ build_aria2() {
   make -j$(nproc)
   make install
   echo "- aria2: source: ${aria2_latest_url:-cached aria2}" >>"${BUILD_INFO}"
+  echo "- Max server connections: patched to 2147483647." >>"${BUILD_INFO}"
   echo >>"${BUILD_INFO}"
 }
 
@@ -482,6 +485,19 @@ test_build() {
   "${RUNNER_CHECKER}" "${CROSS_PREFIX}/bin/aria2c"* -t 10 --console-log-level=debug --http-accept-gzip=true https://github.com/ -d /tmp -o test
   echo "================================================"
 }
+
+# |==============================|
+# |   Aria2 source patch below   |
+# |  -- sed rules, patch drools  |
+# |==============================|
+
+patch_aria2() {
+  sed -i '/PREF_MAX_CONNECTION_PER_SERVER/{n;n;s/\(,\s*\)16\(,\)/\12147483647\2/}' OptionHandlerFactory.cc
+}
+
+# |==============================|
+# |     End of source patch      |
+# |==============================|
 
 prepare_cmake
 prepare_ninja
